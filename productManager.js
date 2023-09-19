@@ -1,52 +1,61 @@
-class Product {
-    constructor(title, description, price, thumbnail, code, stock) {
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.thumbnail = thumbnail;
-        this.code = code;
-        this.stock = stock;
-        this.id = 0; 
-    }
-}
+const fs = require('fs');
 
 class ProductManager {
-    constructor() {
-        this.products = [];
-        this.currentId = 0; 
+    constructor(path) {
+        this.path = path;
+        if (!fs.existsSync(path)) {
+            fs.writeFileSync(path, JSON.stringify([]));  
+        }
+    }
+
+    _readFile() {
+        const data = fs.readFileSync(this.path, 'utf8');
+        return JSON.parse(data);
+    }
+
+    _writeFile(data) {
+        fs.writeFileSync(this.path, JSON.stringify(data));
     }
 
     addProduct(product) {
-        // Campos son obligatorios
-        if (!product.title || !product.description || !product.price || !product.thumbnail || !product.code || !product.stock) {
-            console.log("Todos los campos son obligatorios");
-            return;
-        }
-
-        // Validar que no se repita el campo “code”
-        const existingProduct = this.products.find(p => p.code === product.code);
-        if (existingProduct) {
-            console.log("El código de producto ya existe");
-            return;
-        }
-
-        // Asignar un id creciente
-        product.id = ++this.currentId;
-        this.products.push(product);
+        const products = this._readFile();
+        const lastId = products.length ? products[products.length - 1].id : 0;
+        product.id = lastId + 1;
+        products.push(product);
+        this._writeFile(products);
     }
 
     getProducts() {
-        return this.products;
+        return this._readFile();
     }
 
     getProductById(id) {
-        const foundProduct = this.products.find(p => p.id === id);
-        if (!foundProduct) {
-            console.log("Not found");
-            return null;
+        const products = this._readFile();
+        const product = products.find(p => p.id === id);
+        return product || null;
+    }
+
+    updateProduct(id, updatedProduct) {
+        const products = this._readFile();
+        const index = products.findIndex(p => p.id === id);
+        if (index !== -1) {
+            updatedProduct.id = id;  
+            products[index] = updatedProduct;
+            this._writeFile(products);
+        } else {
+            console.log(`Product with ID ${id} not found.`);
         }
-        return foundProduct;
+    }
+
+    deleteProduct(id) {
+        const products = this._readFile();
+        const updatedProducts = products.filter(p => p.id !== id);
+        if (products.length === updatedProducts.length) {
+            console.log(`Product with ID ${id} not found.`);
+        } else {
+            this._writeFile(updatedProducts);
+        }
     }
 }
 
-
+module.exports = ProductManager;
