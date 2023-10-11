@@ -1,5 +1,5 @@
 const express = require('express');
-const CartManager = require('./CartManager');
+const CartManager = require('../CartManager');
 const router = express.Router();
 
 const manager = new CartManager('./data/cart.json');
